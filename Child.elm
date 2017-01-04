@@ -1,4 +1,4 @@
-port module Child exposing (..)
+module Child exposing (..)
 
 type alias Model =
   {
@@ -11,14 +11,7 @@ type alias ComponentId =
 type Msg
   = NoOp
   | ProcessData String
-  | RouteData (ComponentId, String)
   
-subscriptions : Model -> Sub Msg
-subscriptions model =
-  Sub.batch [ sendData RouteData ]
-
-port sendData : ((ComponentId, String) -> msg) -> Sub msg
-
 initialize : ComponentId -> Model
 initialize componentId =
   {
@@ -37,12 +30,6 @@ update msg model =
 
     NoOp ->
       model ! []
-
-    RouteData (componentId, val) ->
-      if componentId == model.id then
-        update (ProcessData val) model
-      else
-        model ! []
 
     ProcessData data ->
       let
