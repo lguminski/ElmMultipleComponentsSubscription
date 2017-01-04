@@ -19,7 +19,8 @@ init = {
 
 type Msg
   = NoOp
-  | ChildMessage Child.Model Child.Msg
+  | ChildMessage Child.ComponentId Child.Msg
+  | RouteData (Child.ComponentId, String)
 
 main =
   Html.program
@@ -35,7 +36,9 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  Sub.batch [ Sub.map ChildMessage (Child.subscriptions model.child) ]
+  Sub.batch [ sendData RouteData ]
+
+port sendData : ((Child.ComponentId, String) -> msg) -> Sub msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -44,9 +47,22 @@ update msg model =
     NoOp ->
       model ! []
 
-    ChildMessage childModel childMessage ->
-      let
-        (updatedChildModel, cmd) =
-          Child.update childMessage childModel
-      in
-      { model | children = List.map (\x -> if x.id == childModel.id then updatedChildModel else x) model.children} ! [ Cmd.map (ChildMessage childModel) cmd ]
+    ChildMessage componentId childMessage ->
+        let
+            childUpdates =
+                List.map (\c -> if c.id == componentId then updateChild c else c ! []) model.children
+
+            updateChild child =
+                let
+                    (updatedChildModel, cmd) =
+                        Child.update childMessage child
+                in
+                    updatedChildModel ! [ Cmd.map (ChildMessage child.id) cmd ]
+
+        in
+            { model | children = List.map Tuple.first childUpdates }
+                ! (List.map Tuple.second childUpdates)
+
+    RouteData (componentId, val) ->
+        update (ChildMessage componentId (Child.ProcessData val)) model
+

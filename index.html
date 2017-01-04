@@ -3,7 +3,7 @@
     <body>
         <script src="elm.js"></script>
         <script>
-            const elm = Elm.Main.fullscreen();
+            const elm = Elm.Parent.fullscreen();
             elm.ports.sendData.send([1,"content for component 1"]);
             elm.ports.sendData.send([2,"content for component 2"]);
         </script>
